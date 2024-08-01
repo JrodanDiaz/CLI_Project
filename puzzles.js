@@ -6,6 +6,9 @@ import boxen from "boxen";
 
 let solved = false;
 
+let rowStarters = [];
+let columnStarters = [];
+
 let table = new CliTable3({
   chars: {
     top: "═",
@@ -53,6 +56,12 @@ const labelRowsAndColumns = (table) => {
       }
       if (table[i][p] === "") {
         table[i][p] = `${label}`;
+        if (p - 1 < 0 || table[i][p - 1] === "-") {
+          rowStarters.push(label);
+        }
+        if (i - 1 < 0 || table[i - 1][p] === "-") {
+          columnStarters.push(label);
+        }
         label += 1;
         if (p !== 0) {
           labeled.add(p);
@@ -60,9 +69,12 @@ const labelRowsAndColumns = (table) => {
       }
     }
   }
+  console.log(`rowStarters: ${rowStarters}`);
+  console.log(`colStarters: ${columnStarters}`);
   return table;
 };
 
+//we should have a global variable for column numbers and row numbers
 const displayEmptyPuzzle = (across) => {
   const rows = [];
   for (const answer in across) {
@@ -114,12 +126,18 @@ const chooseAcrossOrDown = async () => {
   }
 };
 
-const chooseAcrossOptions = async () => {
+const chooseAcrossOptions = async (table) => {
+  const choices = [{ name: "<<< Go Back", value: "back" }];
+  for (const row of table) {
+    for (const col of row) {
+    }
+  }
+
   const answers = await inquirer.prompt({
     name: "answer",
     type: "list",
     message: "Press 'Go Back' to go back to the previous menu",
-    choices: [{ name: "<<< Go Back", value: "back" }],
+    choices: choices,
   });
   if (answers.answer === "back") {
     await chooseAcrossOrDown();
