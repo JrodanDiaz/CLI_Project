@@ -8,6 +8,8 @@ let solved = false;
 
 let rowStarters = [];
 let columnStarters = [];
+let AcrossHints = ["Across\n"];
+let DownHints = ["Down\n"];
 
 let table = new CliTable3({
   chars: {
@@ -34,7 +36,6 @@ let table = new CliTable3({
 //maybe we should only take the across ones and label it accordingly
 
 const displayCompletedPuzzle = (across) => {
-  //   puzzles.append({ down, across });
   const rows = [];
   for (const answer in across) {
     const row = [];
@@ -57,7 +58,7 @@ const labelRowsAndColumns = (table) => {
       if (table[i][p] === "") {
         table[i][p] = `${label}`;
         if (p - 1 < 0 || table[i][p - 1] === "-") {
-          rowStarters.push(label);
+          rowStarters.push({ label: label, startingPos: i });
         }
         if (i - 1 < 0 || table[i - 1][p] === "-") {
           columnStarters.push(label);
@@ -69,8 +70,6 @@ const labelRowsAndColumns = (table) => {
       }
     }
   }
-  console.log(`rowStarters: ${rowStarters}`);
-  console.log(`colStarters: ${columnStarters}`);
   return table;
 };
 
@@ -94,18 +93,16 @@ const displayEmptyPuzzle = (across) => {
 };
 
 const displayHints = (puzzle) => {
-  let Across = "Across\n\n";
-  let Down = "";
-  let i = 1;
+  let i = 0;
   for (const key in puzzle) {
-    Across += `${i}. ${puzzle[key]}\n`;
+    AcrossHints.push(`${rowStarters[i].label}. ${puzzle[key]}`);
     i += 1;
   }
   console.log(
-    boxen(Across, {
-      // padding: 1,
+    boxen(AcrossHints.join("\n"), {
+      padding: 1,
       borderStyle: "round",
-      textAlignment: "center",
+      textAlignment: "left",
     })
   );
 };
@@ -126,11 +123,25 @@ const chooseAcrossOrDown = async () => {
   }
 };
 
+const inputAnswer = async (label, direction) => {
+  const answer = await inquirer.prompt({
+    name: "answer",
+    type: "input",
+    message: "Input your answer.",
+  });
+
+  const startingPosition = rowStarters[label];
+  if (direction === "across") {
+    const row = table[startingPosition];
+  }
+
+  console.log(answer.answer);
+};
+
 const chooseAcrossOptions = async (table) => {
   const choices = [{ name: "<<< Go Back", value: "back" }];
-  for (const row of table) {
-    for (const col of row) {
-    }
+  for (let i = 1; i < AcrossHints.length; i++) {
+    choices.push({ name: AcrossHints[i], value: AcrossHints[i][0] });
   }
 
   const answers = await inquirer.prompt({
@@ -141,21 +152,15 @@ const chooseAcrossOptions = async (table) => {
   });
   if (answers.answer === "back") {
     await chooseAcrossOrDown();
+  } else {
+    await inputAnswer(answers.answer, "across");
   }
 };
 
 export const startCrossword = async (puzzle) => {
-  displayHints(puzzle);
   displayEmptyPuzzle(puzzle);
+  displayHints(puzzle);
   while (!solved) {
     await chooseAcrossOrDown();
   }
 };
-
-// displayCompletedPuzzle(across1);
-// displayEmptyPuzzle(across1);
-// displayHints(across1);
-// displayEmptyPuzzle(symmetricalAcross);
-// displayHints(symmetricalAcross);
-// displayCompletedPuzzle(symmetricalAcross);
-// console.log(table.toString());
