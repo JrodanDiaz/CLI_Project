@@ -58,8 +58,6 @@ const labelRowsAndColumns = (table) => {
   let label = 1;
   for (let i = 0; i < table.length; i++) {
     for (let p = 0; p < table[i].length; p++) {
-      console.log(`label rows and columns ${i} ${p}`);
-
       if (labeled.has(p)) {
         continue;
       }
@@ -68,13 +66,10 @@ const labelRowsAndColumns = (table) => {
       if (table[i][p] === "") {
         table[i][p] = `${chalk.blue(`${label}.`)}`;
         if (p - 1 < 0 || table[i][p - 1] === "---") {
-          console.log(`labelling row starter at ${i} ${p}`);
-
           rowStarters.push({ label: label, startingPos: i });
         }
         // if the space above it is null or is a ---
         if (i - 1 < 0 || table[i - 1][p] === "---") {
-          console.log(`labelling col starter at ${i} ${p}`);
           columnStarters.push({ label: label, startingPos: p });
         }
         label += 1;
@@ -84,8 +79,6 @@ const labelRowsAndColumns = (table) => {
       }
     }
   }
-  console.log(columnStarters);
-
   return table;
 };
 
@@ -181,6 +174,7 @@ const chooseAcrossOrDown = async (puzzle) => {
   } else if (answers.direction === "check") {
     const isSolved = checkCrossword();
     if (!isSolved) {
+      await printFiglet("Not done yet", "slant");
       console.log(chalk.red("The crossword is incorrect or incomplete"));
     } else {
       await printFiglet("Hooray!", "slant");
@@ -193,14 +187,23 @@ const chooseAcrossOrDown = async (puzzle) => {
   }
 };
 
+const isValidNumber = (number) => {
+  return !isNaN(number) && number !== "";
+};
+
 const chooseNumber = async (direction) => {
   const answer = await inquirer.prompt({
     name: "number",
     type: "input",
     message: "Which hint would you like to try? (Input number)",
   });
-  console.log(chalk.magenta(`You chose hint #${answer.number}`));
-  await inputAnswer(answer.number, direction);
+  if (await isValidNumber(answer.number)) {
+    console.log(chalk.green(`You chose ${direction} hint #${answer.number}`));
+    await inputAnswer(answer.number, direction);
+  } else {
+    console.log(chalk.red("Please input a valid number"));
+    await chooseNumber(direction);
+  }
 };
 
 const getStartingRowPosition = (label) => {
@@ -238,7 +241,6 @@ const modifyRow = async (answer, i) => {
       continue;
     }
     if (isChalkNumber(row[k])) {
-      console.log(`row[k] is a number: ${row[k]}`);
       //this substring cuts out the very last character of the chalk string (our previous input)
       row[k] = `${row[k].substring(0, 12)}${answer[leftPointer]}`;
       leftPointer++;
@@ -308,7 +310,7 @@ const inputAnswer = async (label, direction) => {
   const answer = await inquirer.prompt({
     name: "answer",
     type: "input",
-    message: `${hint[0]}\nInput your answer:`,
+    message: `${chalk.yellow(hint[0])}\nInput your answer:`,
   });
 
   if (direction === across) {
@@ -371,13 +373,9 @@ const checkCrossword = () => {
       }
     }
     if (!answerSet.has(acrossWord)) {
-      console.log(answerSet);
-      console.log(`answerSet does not have ${acrossWord}`);
       return false;
     }
-    console.log(`${acrossWord} found in set :-)`);
   }
-  console.log("all words match");
   return true;
 };
 
