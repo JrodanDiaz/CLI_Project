@@ -179,6 +179,7 @@ const chooseAcrossOrDown = async (puzzle) => {
       { name: chalk.magenta("Exit"), value: "exit" },
     ],
   });
+
   if (answers.direction === "hints") {
     displayHints(puzzle);
     await chooseAcrossOrDown(puzzle);
@@ -190,7 +191,6 @@ const chooseAcrossOrDown = async (puzzle) => {
     } else {
       await printFiglet("Hooray!", "slant");
       console.log();
-
       solved = true;
     }
   } else if (answers.direction === "exit") {
@@ -227,10 +227,12 @@ const modifyRow = async (answer, i) => {
     if (row[k] === "---") {
       continue;
     }
+    //the numbers are colored blue with chalk, which convert it to a long weird string, so special handling is required
     if (isChalkNumber(row[k])) {
       //this substring cuts out the very last character of the chalk string (our previous input)
       row[k] = `${row[k].substring(0, 12)}${answer[leftPointer]}`;
       leftPointer++;
+      //otherwise, set the cell to the character with 2 empty spaces before it, so that it's aligned with the numbered cells
     } else {
       row[k] = `  ${answer[leftPointer]}`;
       leftPointer++;
@@ -245,13 +247,15 @@ const modifyColumn = (answer, column) => {
     if (leftPointer > answer.length) {
       break;
     }
-    //this might not make sense for columns...
+    //if the cell is invalid, continue
     if (row[column] === "---") {
       continue;
     }
+    //handle the special chalk number case
     if (isChalkNumber(row[column])) {
       row[column] = `${row[column].substring(0, 12)}${answer[leftPointer]}`;
       leftPointer++;
+      //if cell is empty or cell is just one char long, replace it
     } else {
       row[column] = `  ${answer[leftPointer]}`;
       leftPointer++;
@@ -260,13 +264,11 @@ const modifyColumn = (answer, column) => {
 };
 
 const inputAnswer = async (label, direction) => {
-  //iterate through AcrossHints: String[] to find the hint that matches the label
-  //maybe instead we should have a bucket array where the index is the label and the value is the hint
-
   const hint =
     direction === across
       ? AcrossHints.filter((hint) => hint[0] == label)
       : DownHints.filter((hint) => hint[0] == label);
+
   const answer = await inquirer.prompt({
     name: "answer",
     type: "input",
@@ -275,16 +277,19 @@ const inputAnswer = async (label, direction) => {
 
   if (direction === across) {
     const startingRow = getStartingRowPosition(label, rowStarters);
+    // if the inputted answer is invalid, ask again
     if (!(await acrossAnswerIsValid(answer.answer, table[startingRow]))) {
       await inputAnswer(label, direction);
+      //otherwise, modify the row
     } else {
       await modifyRow(answer.answer.toUpperCase(), startingRow);
-      const row = table[startingRow];
     }
   } else {
     const startingColumn = getStartingColumnPosition(label, columnStarters);
+    // if the inputted answer is invalid, ask again
     if (!(await downAnswerIsValid(answer.answer, table, startingColumn))) {
       await inputAnswer(label, direction);
+      //otherwise. modify the column
     } else {
       await modifyColumn(answer.answer.toUpperCase(), startingColumn);
     }
@@ -292,9 +297,8 @@ const inputAnswer = async (label, direction) => {
   displayHints(globalPuzzle);
 };
 
-// \x1B[34m1.\x1B[39m
-// this is an empty chalk string (length 18)
 const checkCrossword = () => {
+  //we only need to check if all across words are correct, b/c if they are, then the down words are correct too
   for (const row of table) {
     let acrossWord = "";
     for (let value of row) {
@@ -306,6 +310,7 @@ const checkCrossword = () => {
         acrossWord += lastValue;
       }
     }
+    //if any across word is not found in the answer set, return false
     if (!answerSet.has(acrossWord)) {
       return false;
     }
@@ -313,7 +318,23 @@ const checkCrossword = () => {
   return true;
 };
 
-export const startCrossword = async (puzzle) => {
+const choosePuzzle = async (puzzles) => {
+  const choices = [];
+  for (let i = 0; i < puzzles.length; i++) {
+    choices.push({ name: chalk.cyan(`Puzzle ${i + 1}`), value: `${i}` });
+  }
+  const answer = await inquirer.prompt({
+    name: "puzzle",
+    type: "list",
+    message: chalk.magenta(`Choose the puzzle you'd like to play`),
+    choices: choices,
+  });
+
+  return puzzles[answer.puzzle];
+};
+
+export const startCrossword = async (puzzles) => {
+  const puzzle = await choosePuzzle(puzzles);
   globalPuzzle = puzzle;
   initializeTable(puzzle);
   initializeAnswerSet(puzzle);
