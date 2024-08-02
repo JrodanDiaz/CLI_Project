@@ -100,47 +100,54 @@ const labelRowsAndColumns = (table) => {
 };
 
 const createEmptyPuzzle = (puzzle) => {
+  //the keys of the across object are special
+  //the keys are strings, and any spaces will make the table cell unusuable, filling it with a ---
   const across = puzzle.across;
 
   const rows = [];
   for (const answer in across) {
     const row = [];
     for (const i in answer) {
+      //if the key has a blank space, block the cell out
       if (answer[i] === " ") {
         row.push("---");
+        //else if the key is a normal character, create a usuable empty cell
       } else {
         row.push("");
       }
     }
+    //push this row to the rows array
     rows.push(row);
   }
+  //push all the rows to the table
   const labeledTable = labelRowsAndColumns(rows);
   table.push(...labeledTable);
 };
 
 const initializeLabeledHints = (puzzle, rowStarters, columnStarters) => {
+  //when this function is called, the table has been created and labeled
+  //we have saved which labels start rows, which labels start columns, and which labels do both
+  //we now can append the hints to their corresponding labels and save it to the acrossHints and downHints array
   const acrossHints = [];
   const downHints = [];
   const puzzle_across = puzzle.across;
   const puzzle_down = puzzle.down;
-  if (acrossHints.length === 0) {
-    let i = 0;
-    for (const key in puzzle_across) {
-      acrossHints.push(`${rowStarters[i].label}. ${puzzle_across[key]}`);
-      i += 1;
-    }
+
+  let i = 0;
+  for (const key in puzzle_across) {
+    acrossHints.push(`${rowStarters[i].label}. ${puzzle_across[key]}`);
+    i += 1;
   }
-  if (downHints.length === 0) {
-    let i = 0;
-    for (const key in puzzle_down) {
-      downHints.push(`${columnStarters[i].label}. ${puzzle_down[key]}`);
-      i += 1;
-    }
+
+  i = 0;
+  for (const key in puzzle_down) {
+    downHints.push(`${columnStarters[i].label}. ${puzzle_down[key]}`);
+    i += 1;
   }
   return [acrossHints, downHints];
 };
 
-const displayHints = (puzzle) => {
+const displayHints = () => {
   console.log(table.toString());
   console.log(
     // we dont need the first value, as it is the direction
@@ -166,7 +173,7 @@ const displayHints = (puzzle) => {
   );
 };
 
-const chooseAcrossOrDown = async (puzzle) => {
+const chooseOptionsMenu = async (puzzle) => {
   const answers = await inquirer.prompt({
     name: "direction",
     type: "list",
@@ -181,8 +188,8 @@ const chooseAcrossOrDown = async (puzzle) => {
   });
 
   if (answers.direction === "hints") {
-    displayHints(puzzle);
-    await chooseAcrossOrDown(puzzle);
+    displayHints();
+    await chooseOptionsMenu(puzzle);
   } else if (answers.direction === "check") {
     const isSolved = checkCrossword();
     if (!isSolved) {
@@ -294,7 +301,7 @@ const inputAnswer = async (label, direction) => {
       await modifyColumn(answer.answer.toUpperCase(), startingColumn);
     }
   }
-  displayHints(globalPuzzle);
+  displayHints();
 };
 
 const checkCrossword = () => {
@@ -347,8 +354,8 @@ export const startCrossword = async (puzzles) => {
   AcrossHints = acrossHints;
   DownHints = downHints;
   await printFiglet("Terminal Crossword Time", "slant");
-  displayHints(puzzle);
+  displayHints();
   while (!solved) {
-    await chooseAcrossOrDown(puzzle);
+    await chooseOptionsMenu(puzzle);
   }
 };
