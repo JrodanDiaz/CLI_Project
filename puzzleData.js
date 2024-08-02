@@ -21,8 +21,8 @@ export const puzzle1 = {
 }
 
 const across2 = {
-    "tab": "Keyboard key near the top left",
-    "item": "Hot couple, in celebrity gossip column",
+    "tab  ": "Keyboard key near the top left",
+    "item ": "Hot couple, in celebrity gossip column",
     "feral": "Wild, as an animal",
     "furry": "Like many four-legged friends",
     "space": "keyboard key on the bottom"
@@ -39,4 +39,25 @@ const down2 = {
 export const puzzle2 = {
     across: across2,
     down: down2
+}
+
+const across3 = {
+    " rizz": "Style, charm or attractiveness, per a modern coinage",
+    "homie": "Close bud",
+    "omens": "Black cats and red moons, supposedly",
+    "react": "Make a face, say",
+    "non  ": "Prefix with fat or fiction"
+}
+
+const down3 = {
+    "romeo": "Title Shakespeare role for a young DiCaprio",
+    "imean": "“That is to say...”",
+    "zinc": "Chemical element found in many immune-boosting supplements",
+    "zest": "Finely grate, as a lemon peel",
+    "horn": "Car's noisemaker"
+}
+
+export const puzzle3 = {
+    across: across3,
+    down: down3
 }

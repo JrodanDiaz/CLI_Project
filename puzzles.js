@@ -72,6 +72,7 @@ const labelRowsAndColumns = (table) => {
 
           rowStarters.push({ label: label, startingPos: i });
         }
+        // if the space above it is null or is a ---
         if (i - 1 < 0 || table[i - 1][p] === "---") {
           console.log(`labelling col starter at ${i} ${p}`);
           columnStarters.push({ label: label, startingPos: p });
@@ -83,6 +84,7 @@ const labelRowsAndColumns = (table) => {
       }
     }
   }
+  console.log(columnStarters);
 
   return table;
 };
