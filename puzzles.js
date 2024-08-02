@@ -1,5 +1,5 @@
 import CliTable3 from "cli-table3";
-import { across1, symmetricalAcross } from "./puzzleData.js";
+import { puzzle1 } from "./puzzleData.js";
 import inquirer from "inquirer";
 import chalk from "chalk";
 import boxen from "boxen";
@@ -11,17 +11,19 @@ import boxen from "boxen";
  iterate through and add each char to an index of the row if != "-"
 
 */
+// const puzzle = puzzle1;
+let globalPuzzle;
 
 const across = "across";
 const down = "down";
-const puzzle = across1;
 
 let solved = false;
 
 let rowStarters = [];
 let columnStarters = [];
-let AcrossHints = ["Across\n"];
-let DownHints = ["Down\n"];
+let AcrossHints = [];
+let DownHints = [];
+
 const chalkToNum = {};
 for (let i = 0; i < 15; i++) {
   const num = chalk.blue(`${i}.`);
@@ -80,7 +82,7 @@ const labelRowsAndColumns = (table) => {
           rowStarters.push({ label: label, startingPos: i });
         }
         if (i - 1 < 0 || table[i - 1][p] === "-") {
-          columnStarters.push(label);
+          columnStarters.push({ label: label, startingPos: p });
         }
         label += 1;
         if (p !== 0) {
@@ -94,7 +96,9 @@ const labelRowsAndColumns = (table) => {
 };
 
 //we should have a global variable for column numbers and row numbers
-const displayEmptyPuzzle = (across) => {
+const displayEmptyPuzzle = (puzzle) => {
+  const across = puzzle.across;
+
   const rows = [];
   for (const answer in across) {
     const row = [];
@@ -114,18 +118,39 @@ const displayEmptyPuzzle = (across) => {
 
 const displayHints = (puzzle) => {
   // only update acrossHints the first time this function is called
-  if (AcrossHints.length === 1) {
+  const puzzle_across = puzzle.across;
+  const puzzle_down = puzzle.down;
+  console.log(puzzle_across);
+  console.log(puzzle_down);
+  if (AcrossHints.length === 0) {
     let i = 0;
     // the logic for this needs to change to account for down
-    for (const key in puzzle) {
-      AcrossHints.push(`${rowStarters[i].label}. ${puzzle[key]}`);
+    for (const key in puzzle_across) {
+      AcrossHints.push(`${rowStarters[i].label}. ${puzzle_across[key]}`);
+      i += 1;
+    }
+  }
+  if (DownHints.length === 0) {
+    let i = 0;
+    for (const key in puzzle_down) {
+      DownHints.push(`${columnStarters[i].label}. ${puzzle_down[key]}`);
       i += 1;
     }
   }
   console.log(
     // we dont need the first value, as it is the direction
-    boxen(chalk.magenta(AcrossHints.slice(1).join("\n")), {
+    boxen(chalk.magenta(AcrossHints.join("\n")), {
       title: "Across",
+      titleAlignment: "center",
+      padding: 1,
+      borderStyle: "round",
+      textAlignment: "left",
+    })
+  );
+  console.log(
+    // we dont need the first value, as it is the direction
+    boxen(chalk.magenta(DownHints.join("\n")), {
+      title: "Down",
       titleAlignment: "center",
       padding: 1,
       borderStyle: "round",
@@ -134,7 +159,7 @@ const displayHints = (puzzle) => {
   );
 };
 
-const chooseAcrossOrDown = async () => {
+const chooseAcrossOrDown = async (puzzle) => {
   const answers = await inquirer.prompt({
     name: "direction",
     type: "list",
@@ -147,8 +172,8 @@ const chooseAcrossOrDown = async () => {
   });
   if (answers.direction === "hints") {
     //this is just accessing the global puzzle variable. Clean this up later
-    displayHints(across1);
-    await chooseAcrossOrDown();
+    displayHints(puzzle);
+    await chooseAcrossOrDown(puzzle);
   }
   await chooseNumber(answers.direction);
 };
@@ -242,7 +267,10 @@ const getValueFromChalkString = (string) => {
 // this is an empty chalk string (length 18)
 const checkCrossword = () => {
   const answerSet = new Set();
-  for (const key in puzzle) {
+  for (const key of [
+    ...Object.keys(globalPuzzle.across),
+    ...Object.keys(globalPuzzle.down),
+  ]) {
     let formattedKey = key.trim();
     answerSet.add(formattedKey);
   }
@@ -270,9 +298,10 @@ const checkCrossword = () => {
 };
 
 export const startCrossword = async (puzzle) => {
+  globalPuzzle = puzzle;
   displayEmptyPuzzle(puzzle);
   displayHints(puzzle);
   while (!solved) {
-    await chooseAcrossOrDown();
+    await chooseAcrossOrDown(puzzle);
   }
 };
