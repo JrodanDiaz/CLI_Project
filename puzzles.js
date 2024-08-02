@@ -166,6 +166,7 @@ const chooseAcrossOrDown = async (puzzle) => {
       { name: chalk.red("Down"), value: "down" },
       { name: chalk.yellow("Display Hints"), value: "hints" },
       { name: chalk.green("Check Puzzle"), value: "check" },
+      { name: chalk.magenta("Exit"), value: "exit" },
     ],
   });
   if (answers.direction === "hints") {
@@ -182,6 +183,8 @@ const chooseAcrossOrDown = async (puzzle) => {
 
       solved = true;
     }
+  } else if (answers.direction === "exit") {
+    solved = true;
   } else {
     await chooseNumber(answers.direction);
   }
