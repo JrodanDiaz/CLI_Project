@@ -14,6 +14,7 @@ import boxen from "boxen";
 
 const across = "across";
 const down = "down";
+const puzzle = across1;
 
 let solved = false;
 
@@ -123,7 +124,7 @@ const displayHints = (puzzle) => {
   }
   console.log(
     // we dont need the first value, as it is the direction
-    boxen(AcrossHints.slice(1).join("\n"), {
+    boxen(chalk.magenta(AcrossHints.slice(1).join("\n")), {
       title: "Across",
       titleAlignment: "center",
       padding: 1,
@@ -141,8 +142,14 @@ const chooseAcrossOrDown = async () => {
     choices: [
       { name: "Down", value: "down" },
       { name: "Across", value: "across" },
+      { name: "Display Hints", value: "hints" },
     ],
   });
+  if (answers.direction === "hints") {
+    //this is just accessing the global puzzle variable. Clean this up later
+    displayHints(across1);
+    await chooseAcrossOrDown();
+  }
   await chooseNumber(answers.direction);
 };
 
@@ -167,13 +174,7 @@ const getStartingRowPosition = (label) => {
 const modifyRow = async (answer, i) => {
   const row = table[i];
   let leftPointer = 0;
-  if (answer.length > row.length) {
-    console.log(
-      `Error: Input was too long. Must be ${row.length} characters or less`
-    );
-    // in the future, we may want to just go right back to asking to input the answer
-    await chooseNumber(across);
-  }
+
   for (let k = 0; i < table[i].length && leftPointer < answer.length; k++) {
     if (row[k] === "-") {
       continue;
@@ -190,6 +191,17 @@ const modifyRow = async (answer, i) => {
   table[i] = row;
 };
 
+const inputAnswerIsValid = async (answer, row) => {
+  const validRow = row.filter((space) => space !== "-");
+  if (answer.length > validRow.length) {
+    console.log(
+      `Error: Input was too long. Must be ${row.length} characters or less`
+    );
+    return false;
+  }
+  return true;
+};
+
 const inputAnswer = async (label, direction) => {
   //iterate through AcrossHints: String[] to find the hint that matches the label
   //maybe instead we should have a bucket array where the index is the label and the value is the hint
@@ -202,34 +214,60 @@ const inputAnswer = async (label, direction) => {
 
   if (direction === across) {
     const startingRow = getStartingRowPosition(label);
-    await modifyRow(answer.answer, startingRow);
-    const row = table[startingRow];
-    console.log(row);
-    console.log("=========");
-    console.log(table.toString());
+    if (!(await inputAnswerIsValid(answer.answer, table[startingRow]))) {
+      await inputAnswer(label, direction);
+    } else {
+      await modifyRow(answer.answer.toUpperCase(), startingRow);
+      const row = table[startingRow];
+      console.log(row);
+      console.log("=========");
+      console.log(table.toString());
+      checkCrossword();
+    }
   }
-
-  console.log(answer.answer);
 };
 
-// const chooseAcrossOptions = async (table) => {
-//   const choices = [{ name: "<<< Go Back", value: "back" }];
-//   for (let i = 1; i < AcrossHints.length; i++) {
-//     choices.push({ name: AcrossHints[i], value: AcrossHints[i][0] });
-//   }
+const isEmptyChalkString = (string) => {
+  return string.length === 18;
+};
 
-//   const answers = await inquirer.prompt({
-//     name: "answer",
-//     type: "list",
-//     message: "Press 'Go Back' to go back to the previous menu",
-//     choices: choices,
-//   });
-//   if (answers.answer === "back") {
-//     await chooseAcrossOrDown();
-//   } else {
-//     await inputAnswer(answers.answer, "across");
-//   }
-// };
+const isPopulatedChalkString = (string) => {
+  return string.length === 19;
+};
+
+const getValueFromChalkString = (string) => {
+  return string.at(-1);
+};
+// \x1B[34m1.\x1B[39m
+// this is an empty chalk string (length 18)
+const checkCrossword = () => {
+  const answerSet = new Set();
+  for (const key in puzzle) {
+    let formattedKey = key.trim();
+    answerSet.add(formattedKey);
+  }
+  for (const row of table) {
+    let acrossWord = "";
+    for (let value of row) {
+      if (isPopulatedChalkString(value)) {
+        value = getValueFromChalkString(value);
+      }
+      const lastValue = value.at(-1);
+      if (lastValue !== "-") {
+        acrossWord += lastValue;
+      }
+    }
+    if (!answerSet.has(acrossWord)) {
+      console.log(answerSet);
+      console.log(`answerSet does not have ${acrossWord}`);
+      return false;
+    }
+    console.log(`${acrossWord} found in set :-)`);
+  }
+  console.log("all words match");
+  console.log(answerSet);
+  return true;
+};
 
 export const startCrossword = async (puzzle) => {
   displayEmptyPuzzle(puzzle);
