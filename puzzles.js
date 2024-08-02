@@ -101,15 +101,15 @@ const labelRowsAndColumns = (table) => {
 
 const createEmptyPuzzle = (puzzle) => {
   //the keys of the across object are special
-  //the keys are strings, and any spaces will make the table cell unusuable, filling it with a ---
+  //the keys are strings, and any spaces will block out the table cell, filling it with a ---
   const across = puzzle.across;
 
   const rows = [];
   for (const answer in across) {
     const row = [];
-    for (const i in answer) {
+    for (const char in answer) {
       //if the key has a blank space, block the cell out
-      if (answer[i] === " ") {
+      if (answer[char] === " ") {
         row.push("---");
         //else if the key is a normal character, create a usuable empty cell
       } else {

@@ -58,3 +58,21 @@ const down3 = {
 }
 
 export const puzzle3 = new Puzzle(across3, down3)
+
+// const across4 = {
+//     "rome ": "World capital with a museum dedicated entirely to pasta",
+//     "xbox ": "Console for the game Halo",
+//     "sixty": "Number of degrees in each angle of an equilateral triangle",
+//     " tire": "Inflatable bike part",
+//     " seat": "Spot in Congress"
+// }
+
+// const down4 = {
+//     "rxs": "Prescriptions, for short",
+//     "obits": "'In memoriam' pieces",
+//     "moxie": "Spunk",
+//     "extra": "For an additional cost",
+//     "yet": "'You ain't seen nothing ___!'"
+// }
+
+// export const puzzle4 = new Puzzle(across4, down4)
