@@ -71,27 +71,27 @@ const initializeAnswerSet = (puzzle) => {
 const labelRowsAndColumns = (table) => {
   const labeled = new Set();
   let label = 1;
-  for (let i = 0; i < table.length; i++) {
-    for (let p = 0; p < table[i].length; p++) {
+  for (let row = 0; row < table.length; row++) {
+    for (let col = 0; col < table[row].length; col++) {
       //if the current table column has been labeled already, skip it
-      if (labeled.has(p)) {
+      if (labeled.has(col)) {
         continue;
       }
       //otherwise, if the table is open, label it
-      if (table[i][p] === "") {
-        table[i][p] = `${chalk.blue(`${label}.`)}`;
+      if (table[row][col] === "") {
+        table[row][col] = `${chalk.blue(`${label}.`)}`;
         // if the label is a left boundary of the table, save its position to row starters (it starts the row and is an across word)
-        if (p - 1 < 0 || table[i][p - 1] === "---") {
-          rowStarters.push({ label: label, startingPos: i });
+        if (col - 1 < 0 || table[row][col - 1] === "---") {
+          rowStarters.push({ label: label, startingPos: row });
         }
         // if the label is a top boundary of the table, save its position to column starters (it starts the column and is a down word)
-        if (i - 1 < 0 || table[i - 1][p] === "---") {
-          columnStarters.push({ label: label, startingPos: p });
+        if (row - 1 < 0 || table[row - 1][col] === "---") {
+          columnStarters.push({ label: label, startingPos: col });
         }
         //increment label, and ensure we never add 0 to the set, as the zero index of every row always starts a row
         label += 1;
-        if (p !== 0) {
-          labeled.add(p);
+        if (col !== 0) {
+          labeled.add(col);
         }
       }
     }
