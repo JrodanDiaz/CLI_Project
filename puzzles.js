@@ -80,10 +80,10 @@ const labelRowsAndColumns = (table) => {
       //if in a row that already has a label, it must only have a space below it to be labeled
       if (table[i][p] === "") {
         table[i][p] = `${chalk.blue(`${label}.`)}`;
-        if (p - 1 < 0 || table[i][p - 1] === "-") {
+        if (p - 1 < 0 || table[i][p - 1] === "---") {
           rowStarters.push({ label: label, startingPos: i });
         }
-        if (i - 1 < 0 || table[i - 1][p] === "-") {
+        if (i - 1 < 0 || table[i - 1][p] === "---") {
           columnStarters.push({ label: label, startingPos: p });
         }
         label += 1;
@@ -105,7 +105,7 @@ const createEmptyPuzzle = (puzzle) => {
     const row = [];
     for (const i in answer) {
       if (answer[i] === " ") {
-        row.push("-");
+        row.push("---");
       } else {
         row.push("");
       }
@@ -139,22 +139,24 @@ const displayHints = (puzzle) => {
   console.log(table.toString());
   console.log(
     // we dont need the first value, as it is the direction
-    boxen(chalk.magenta(AcrossHints.join("\n")), {
+    boxen(chalk.cyan(AcrossHints.join("\n")), {
       title: "Across",
       titleAlignment: "center",
       padding: 1,
       borderStyle: "round",
       textAlignment: "left",
+      borderColor: "cyan",
     })
   );
   console.log(
     // we dont need the first value, as it is the direction
-    boxen(chalk.magenta(DownHints.join("\n")), {
+    boxen(chalk.red(DownHints.join("\n")), {
       title: "Down",
       titleAlignment: "center",
       padding: 1,
       borderStyle: "round",
       textAlignment: "left",
+      borderColor: "red",
     })
   );
 };
@@ -165,8 +167,8 @@ const chooseAcrossOrDown = async (puzzle) => {
     type: "list",
     message: `Choose answer input: Down or Across? \n`,
     choices: [
-      { name: "Down", value: "down" },
-      { name: "Across", value: "across" },
+      { name: chalk.cyan("Across"), value: "across" },
+      { name: chalk.red("Down"), value: "down" },
       { name: "Display Hints", value: "hints" },
     ],
   });
@@ -218,7 +220,7 @@ const modifyRow = async (answer, i) => {
   let leftPointer = 0;
 
   for (let k = 0; i < table[i].length && leftPointer < answer.length; k++) {
-    if (row[k] === "-") {
+    if (row[k] === "---") {
       continue;
     }
     if (isChalkNumber(row[k])) {
@@ -241,7 +243,7 @@ const modifyColumn = (answer, column) => {
       break;
     }
     //this might not make sense for columns...
-    if (row[column] === "-") {
+    if (row[column] === "---") {
       continue;
     }
     if (isChalkNumber(row[column])) {
@@ -252,11 +254,10 @@ const modifyColumn = (answer, column) => {
       leftPointer++;
     }
   }
-  console.log(table.toString());
 };
 
 const inputAnswerIsValid = async (answer, row) => {
-  const validRow = row.filter((space) => space !== "-");
+  const validRow = row.filter((space) => space !== "---");
   if (answer.length > validRow.length) {
     console.log(
       `Error: Input was too long. Must be ${row.length} characters or less`
@@ -269,7 +270,7 @@ const inputAnswerIsValid = async (answer, row) => {
 const downAnswerIsValid = (answer, column) => {
   let validColumnLength = 0;
   for (let i = 0; i < table.length; i++) {
-    if (table[i][column] !== "-") {
+    if (table[i][column] !== "---") {
       validColumnLength++;
     }
   }
@@ -303,7 +304,6 @@ const inputAnswer = async (label, direction) => {
     } else {
       await modifyRow(answer.answer.toUpperCase(), startingRow);
       const row = table[startingRow];
-      console.log(table.toString());
       //   checkCrossword();
     }
   } else {
@@ -314,6 +314,7 @@ const inputAnswer = async (label, direction) => {
       await modifyColumn(answer.answer.toUpperCase(), startingColumn);
     }
   }
+  displayHints(globalPuzzle);
 };
 
 const isEmptyChalkString = (string) => {
