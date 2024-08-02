@@ -6,6 +6,14 @@ export const across1 = {
     "ors  ": "Surgery sites, for short",
   };
 
+export const down1 = {
+    "adams": "Douglas, who wrote Hitchhiker's Guide to the Galaxy",
+    "time": "A metronome keeps it",
+    "etas": "Greek H's",
+    "dojo": "Martial arts school",
+    "ibar": "Letter-shaped construction beam"
+}
+
 export const symmetricalAcross = {
     "leaf": "lllll",
     "boof": "aweawe",
