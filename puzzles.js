@@ -1,8 +1,8 @@
 import CliTable3 from "cli-table3";
-import { puzzle1 } from "./puzzleData.js";
 import inquirer from "inquirer";
 import chalk from "chalk";
 import boxen from "boxen";
+import figlet from "figlet";
 
 /* 
  Input 4 -> Down or Across -> Display Hint, inquire input
@@ -11,8 +11,9 @@ import boxen from "boxen";
  iterate through and add each char to an index of the row if != "-"
 
 */
-// const puzzle = puzzle1;
 let globalPuzzle;
+let table;
+let answerSet;
 
 const across = "across";
 const down = "down";
@@ -24,33 +25,17 @@ let columnStarters = [];
 let AcrossHints = [];
 let DownHints = [];
 
-// const chalkToNum = {};
-// for (let i = 0; i < 15; i++) {
-//   const num = chalk.blue(`${i}.`);
-//   chalkToNum[num] = i;
-// }
-
-let table = new CliTable3({
-  chars: {
-    top: "═",
-    "top-mid": "╤",
-    "top-left": "╔",
-    "top-right": "╗",
-    bottom: "═",
-    "bottom-mid": "╧",
-    "bottom-left": "╚",
-    "bottom-right": "╝",
-    left: "║",
-    "left-mid": "╟",
-    mid: "─",
-    "mid-mid": "┼",
-    right: "║",
-    "right-mid": "╢",
-    middle: "│",
-  },
-  wordWrap: true,
-  colWidths: [5, 5, 5, 5, 5],
-});
+const initializeAnswerSet = (puzzle) => {
+  const set = new Set();
+  for (const key of [
+    ...Object.keys(puzzle.across),
+    ...Object.keys(puzzle.down),
+  ]) {
+    let formattedKey = key.trim().toUpperCase();
+    set.add(formattedKey);
+  }
+  answerSet = set;
+};
 
 //we need to run a check that the words intersect correctly
 //maybe add functionality that allows for offsets
@@ -73,6 +58,8 @@ const labelRowsAndColumns = (table) => {
   let label = 1;
   for (let i = 0; i < table.length; i++) {
     for (let p = 0; p < table[i].length; p++) {
+      console.log(`label rows and columns ${i} ${p}`);
+
       if (labeled.has(p)) {
         continue;
       }
@@ -81,9 +68,12 @@ const labelRowsAndColumns = (table) => {
       if (table[i][p] === "") {
         table[i][p] = `${chalk.blue(`${label}.`)}`;
         if (p - 1 < 0 || table[i][p - 1] === "---") {
+          console.log(`labelling row starter at ${i} ${p}`);
+
           rowStarters.push({ label: label, startingPos: i });
         }
         if (i - 1 < 0 || table[i - 1][p] === "---") {
+          console.log(`labelling col starter at ${i} ${p}`);
           columnStarters.push({ label: label, startingPos: p });
         }
         label += 1;
@@ -161,22 +151,44 @@ const displayHints = (puzzle) => {
   );
 };
 
+const printFiglet = async (string, font) => {
+  await figlet.text(string, { font: font }, (err, data) => {
+    if (err) {
+      console.log("figlet went wrong");
+      return;
+    }
+    console.log(data);
+  });
+};
+
 const chooseAcrossOrDown = async (puzzle) => {
   const answers = await inquirer.prompt({
     name: "direction",
     type: "list",
-    message: `Choose answer input: Down or Across? \n`,
+    message: `Choose any option. \n`,
     choices: [
       { name: chalk.cyan("Across"), value: "across" },
       { name: chalk.red("Down"), value: "down" },
-      { name: "Display Hints", value: "hints" },
+      { name: chalk.yellow("Display Hints"), value: "hints" },
+      { name: chalk.green("Check Puzzle"), value: "check" },
     ],
   });
   if (answers.direction === "hints") {
     displayHints(puzzle);
     await chooseAcrossOrDown(puzzle);
+  } else if (answers.direction === "check") {
+    const isSolved = checkCrossword();
+    if (!isSolved) {
+      console.log(chalk.red("The crossword is incorrect or incomplete"));
+    } else {
+      await printFiglet("Hooray!", "slant");
+      console.log();
+
+      solved = true;
+    }
+  } else {
+    await chooseNumber(answers.direction);
   }
-  await chooseNumber(answers.direction);
 };
 
 const chooseNumber = async (direction) => {
@@ -304,7 +316,6 @@ const inputAnswer = async (label, direction) => {
     } else {
       await modifyRow(answer.answer.toUpperCase(), startingRow);
       const row = table[startingRow];
-      //   checkCrossword();
     }
   } else {
     const startingColumn = getStartingColumnPosition(label);
@@ -328,17 +339,24 @@ const isPopulatedChalkString = (string) => {
 const getValueFromChalkString = (string) => {
   return string.at(-1);
 };
+
+const getAnswerSetFromPuzzle = (puzzle) => {
+  const set = new Set();
+  for (const key of [
+    ...Object.keys(puzzle.across),
+    ...Object.keys(puzzle.down),
+  ]) {
+    let formattedKey = key.trim().toUpperCase();
+    set.add(formattedKey);
+  }
+  console.log(set);
+
+  return set;
+};
+
 // \x1B[34m1.\x1B[39m
 // this is an empty chalk string (length 18)
 const checkCrossword = () => {
-  const answerSet = new Set();
-  for (const key of [
-    ...Object.keys(globalPuzzle.across),
-    ...Object.keys(globalPuzzle.down),
-  ]) {
-    let formattedKey = key.trim().toUpperCase();
-    answerSet.add(formattedKey);
-  }
   for (const row of table) {
     let acrossWord = "";
     for (let value of row) {
@@ -358,13 +376,40 @@ const checkCrossword = () => {
     console.log(`${acrossWord} found in set :-)`);
   }
   console.log("all words match");
-  console.log(answerSet);
   return true;
+};
+
+const initializeTable = (puzzle) => {
+  const newTable = new CliTable3({
+    chars: {
+      top: "═",
+      "top-mid": "╤",
+      "top-left": "╔",
+      "top-right": "╗",
+      bottom: "═",
+      "bottom-mid": "╧",
+      "bottom-left": "╚",
+      "bottom-right": "╝",
+      left: "║",
+      "left-mid": "╟",
+      mid: "─",
+      "mid-mid": "┼",
+      right: "║",
+      "right-mid": "╢",
+      middle: "│",
+    },
+    wordWrap: true,
+    colWidths: new Array(Object.values(puzzle.down).length).fill(5),
+  });
+  table = newTable;
 };
 
 export const startCrossword = async (puzzle) => {
   globalPuzzle = puzzle;
+  initializeTable(puzzle);
+  initializeAnswerSet(puzzle);
   createEmptyPuzzle(puzzle);
+  await printFiglet("Terminal Crossword Time", "slant");
   displayHints(puzzle);
   while (!solved) {
     await chooseAcrossOrDown(puzzle);

@@ -1,6 +1,6 @@
 import { startCrossword } from "./puzzles.js";
 import CliTable3 from "cli-table3";
-import { puzzle1 } from "./puzzleData.js";
+import { puzzle1, puzzle2 } from "./puzzleData.js";
 
 async function main() {
   await startCrossword(puzzle1);

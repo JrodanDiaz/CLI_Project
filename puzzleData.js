@@ -19,10 +19,24 @@ export const puzzle1 = {
     across: across1,
     down: down1
 }
-export const symmetricalAcross = {
-    "leaf": "lllll",
-    "boof": "aweawe",
-    "ants": "arny",
-    "mare": "sheep",
-    "mary": "labmw"
+
+const across2 = {
+    "tab": "Keyboard key near the top left",
+    "item": "Hot couple, in celebrity gossip column",
+    "feral": "Wild, as an animal",
+    "furry": "Like many four-legged friends",
+    "space": "keyboard key on the bottom"
+}
+
+const down2 = {
+    "tiffs": "Little spats",
+    "ateup": "Thoroughly devoured",
+    "berra": "Yogi who said “Alway go to other people’s funerals otherwise they won’t come to yours”",
+    "marc": "Comedian Maron",
+    "lye": "Caustic chemical compound"
+}
+
+export const puzzle2 = {
+    across: across2,
+    down: down2
 }
