@@ -24,11 +24,11 @@ let columnStarters = [];
 let AcrossHints = [];
 let DownHints = [];
 
-const chalkToNum = {};
-for (let i = 0; i < 15; i++) {
-  const num = chalk.blue(`${i}.`);
-  chalkToNum[num] = i;
-}
+// const chalkToNum = {};
+// for (let i = 0; i < 15; i++) {
+//   const num = chalk.blue(`${i}.`);
+//   chalkToNum[num] = i;
+// }
 
 let table = new CliTable3({
   chars: {
@@ -76,6 +76,8 @@ const labelRowsAndColumns = (table) => {
       if (labeled.has(p)) {
         continue;
       }
+      //this wont work for every table. Ensure that atleast one is true: it has an open space below it, or an open space to the right of it
+      //if in a row that already has a label, it must only have a space below it to be labeled
       if (table[i][p] === "") {
         table[i][p] = `${chalk.blue(`${label}.`)}`;
         if (p - 1 < 0 || table[i][p - 1] === "-") {
@@ -95,8 +97,7 @@ const labelRowsAndColumns = (table) => {
   return table;
 };
 
-//we should have a global variable for column numbers and row numbers
-const displayEmptyPuzzle = (puzzle) => {
+const createEmptyPuzzle = (puzzle) => {
   const across = puzzle.across;
 
   const rows = [];
@@ -113,15 +114,12 @@ const displayEmptyPuzzle = (puzzle) => {
   }
   const labeledTable = labelRowsAndColumns(rows);
   table.push(...labeledTable);
-  console.log(table.toString());
 };
 
 const displayHints = (puzzle) => {
   // only update acrossHints the first time this function is called
   const puzzle_across = puzzle.across;
   const puzzle_down = puzzle.down;
-  console.log(puzzle_across);
-  console.log(puzzle_down);
   if (AcrossHints.length === 0) {
     let i = 0;
     // the logic for this needs to change to account for down
@@ -137,6 +135,8 @@ const displayHints = (puzzle) => {
       i += 1;
     }
   }
+
+  console.log(table.toString());
   console.log(
     // we dont need the first value, as it is the direction
     boxen(chalk.magenta(AcrossHints.join("\n")), {
@@ -171,7 +171,6 @@ const chooseAcrossOrDown = async (puzzle) => {
     ],
   });
   if (answers.direction === "hints") {
-    //this is just accessing the global puzzle variable. Clean this up later
     displayHints(puzzle);
     await chooseAcrossOrDown(puzzle);
   }
@@ -184,7 +183,7 @@ const chooseNumber = async (direction) => {
     type: "input",
     message: "Which hint would you like to try? (Input number)",
   });
-  console.log(`you chose hint #${answer.number}`);
+  console.log(chalk.magenta(`You chose hint #${answer.number}`));
   await inputAnswer(answer.number, direction);
 };
 
@@ -228,7 +227,7 @@ const modifyRow = async (answer, i) => {
       row[k] = `${row[k].substring(0, 12)}${answer[leftPointer]}`;
       leftPointer++;
     } else {
-      row[k] = answer[leftPointer];
+      row[k] = `  ${answer[leftPointer]}`;
       leftPointer++;
     }
   }
@@ -249,7 +248,7 @@ const modifyColumn = (answer, column) => {
       row[column] = `${row[column].substring(0, 12)}${answer[leftPointer]}`;
       leftPointer++;
     } else {
-      row[column] = answer[leftPointer];
+      row[column] = `  ${answer[leftPointer]}`;
       leftPointer++;
     }
   }
@@ -304,10 +303,8 @@ const inputAnswer = async (label, direction) => {
     } else {
       await modifyRow(answer.answer.toUpperCase(), startingRow);
       const row = table[startingRow];
-      console.log(row);
-      console.log("=========");
       console.log(table.toString());
-      checkCrossword();
+      //   checkCrossword();
     }
   } else {
     const startingColumn = getStartingColumnPosition(label);
@@ -366,7 +363,7 @@ const checkCrossword = () => {
 
 export const startCrossword = async (puzzle) => {
   globalPuzzle = puzzle;
-  displayEmptyPuzzle(puzzle);
+  createEmptyPuzzle(puzzle);
   displayHints(puzzle);
   while (!solved) {
     await chooseAcrossOrDown(puzzle);
