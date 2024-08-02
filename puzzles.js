@@ -196,6 +196,24 @@ const getStartingRowPosition = (label) => {
   }
 };
 
+const getStartingColumnPosition = (label) => {
+  for (const starter of columnStarters) {
+    if (starter.label == label) {
+      return starter.startingPos;
+    }
+  }
+};
+
+const getNumberFromChalkString = (string) => {
+  const [first, second] = string.split(".");
+  return first.at(-1);
+};
+
+const isChalkNumber = (string) => {
+  return !isNaN(getNumberFromChalkString(string)) && string !== "";
+  //   return !isNaN(chalkToNum[string]) && string !== "";
+};
+
 const modifyRow = async (answer, i) => {
   const row = table[i];
   let leftPointer = 0;
@@ -204,9 +222,10 @@ const modifyRow = async (answer, i) => {
     if (row[k] === "-") {
       continue;
     }
-    if (!isNaN(chalkToNum[row[k]]) && row[k] !== "") {
+    // if (!isNaN(chalkToNum[row[k]]) && row[k] !== "") {
+    if (isChalkNumber(row[k])) {
       console.log(`row[k] is a number: ${row[k]}`);
-      row[k] = `${row[k]}${answer[leftPointer]}`;
+      row[k] = `${row[k].substring(0, 12)}${answer[leftPointer]}`;
       leftPointer++;
     } else {
       row[k] = answer[leftPointer];
@@ -215,6 +234,8 @@ const modifyRow = async (answer, i) => {
   }
   table[i] = row;
 };
+
+const modifyColumn = (answer, column) => {};
 
 const inputAnswerIsValid = async (answer, row) => {
   const validRow = row.filter((space) => space !== "-");
@@ -227,10 +248,30 @@ const inputAnswerIsValid = async (answer, row) => {
   return true;
 };
 
+const downAnswerIsValid = (answer, column) => {
+  let validColumnLength = 0;
+  for (let i = 0; i < table.length; i++) {
+    if (table[i][column] !== "-") {
+      validColumnLength++;
+    }
+  }
+  if (answer.length > validColumnLength) {
+    console.log(
+      `Error: Input was too long. Must be ${validColumnLength.length} characters or less`
+    );
+    return false;
+  }
+  return true;
+};
+
 const inputAnswer = async (label, direction) => {
   //iterate through AcrossHints: String[] to find the hint that matches the label
   //maybe instead we should have a bucket array where the index is the label and the value is the hint
-  const hint = AcrossHints.filter((hint) => hint[0] == label);
+
+  const hint =
+    direction === across
+      ? AcrossHints.filter((hint) => hint[0] == label)
+      : DownHints.filter((hint) => hint[0] == label);
   const answer = await inquirer.prompt({
     name: "answer",
     type: "input",
@@ -248,6 +289,13 @@ const inputAnswer = async (label, direction) => {
       console.log("=========");
       console.log(table.toString());
       checkCrossword();
+    }
+  } else {
+    const startingColumn = getStartingColumnPosition(label);
+    if (!(await downAnswerIsValid(answer.answer, startingColumn))) {
+      await inputAnswer(label, direction);
+    } else {
+      await modifyColumn(answer.answer.toUpperCase(), startingColumn);
     }
   }
 };
@@ -271,7 +319,7 @@ const checkCrossword = () => {
     ...Object.keys(globalPuzzle.across),
     ...Object.keys(globalPuzzle.down),
   ]) {
-    let formattedKey = key.trim();
+    let formattedKey = key.trim().toUpperCase();
     answerSet.add(formattedKey);
   }
   for (const row of table) {
