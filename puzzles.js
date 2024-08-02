@@ -222,9 +222,9 @@ const modifyRow = async (answer, i) => {
     if (row[k] === "-") {
       continue;
     }
-    // if (!isNaN(chalkToNum[row[k]]) && row[k] !== "") {
     if (isChalkNumber(row[k])) {
       console.log(`row[k] is a number: ${row[k]}`);
+      //this substring cuts out the very last character of the chalk string (our previous input)
       row[k] = `${row[k].substring(0, 12)}${answer[leftPointer]}`;
       leftPointer++;
     } else {
@@ -235,7 +235,26 @@ const modifyRow = async (answer, i) => {
   table[i] = row;
 };
 
-const modifyColumn = (answer, column) => {};
+const modifyColumn = (answer, column) => {
+  let leftPointer = 0;
+  for (const row of table) {
+    if (leftPointer > answer.length) {
+      break;
+    }
+    //this might not make sense for columns...
+    if (row[column] === "-") {
+      continue;
+    }
+    if (isChalkNumber(row[column])) {
+      row[column] = `${row[column].substring(0, 12)}${answer[leftPointer]}`;
+      leftPointer++;
+    } else {
+      row[column] = answer[leftPointer];
+      leftPointer++;
+    }
+  }
+  console.log(table.toString());
+};
 
 const inputAnswerIsValid = async (answer, row) => {
   const validRow = row.filter((space) => space !== "-");
