@@ -1,3 +1,9 @@
+class Puzzle {
+    constructor(across, down) {
+      this.across = across;
+      this.down = down;
+    }
+  }
 
 const across1 = {
     "  ate": "downed",
@@ -15,10 +21,7 @@ const down1 = {
     "ibar": "Letter-shaped construction beam"
 }
 
-export const puzzle1 = {
-    across: across1,
-    down: down1
-}
+export const puzzle1 = new Puzzle(across1, down1)
 
 const across2 = {
     "tab  ": "Keyboard key near the top left",
@@ -36,10 +39,7 @@ const down2 = {
     "lye": "Caustic chemical compound"
 }
 
-export const puzzle2 = {
-    across: across2,
-    down: down2
-}
+export const puzzle2 = new Puzzle(across2, down2)
 
 const across3 = {
     " rizz": "Style, charm or attractiveness, per a modern coinage",
@@ -57,7 +57,4 @@ const down3 = {
     "horn": "Car's noisemaker"
 }
 
-export const puzzle3 = {
-    across: across3,
-    down: down3
-}
+export const puzzle3 = new Puzzle(across3, down3)

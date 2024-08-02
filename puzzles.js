@@ -2,15 +2,17 @@ import CliTable3 from "cli-table3";
 import inquirer from "inquirer";
 import chalk from "chalk";
 import boxen from "boxen";
-import figlet from "figlet";
+import {
+  getStartingRowPosition,
+  getStartingColumnPosition,
+  isChalkNumber,
+  acrossAnswerIsValid,
+  downAnswerIsValid,
+  isPopulatedChalkString,
+  getValueFromChalkString,
+  printFiglet,
+} from "./puzzleUtils.js";
 
-/* 
- Input 4 -> Down or Across -> Display Hint, inquire input
- obtain input, across -> table at rowStarters where label = 4,
- validate input (length less than table[rowStarter pos].length)
- iterate through and add each char to an index of the row if != "-"
-
-*/
 let globalPuzzle;
 let table;
 let answerSet;
@@ -20,10 +22,39 @@ const down = "down";
 
 let solved = false;
 
+//array of objects {label: number, startingPosition: number}
+//this array allows us to know exactly where to start modifying the table when a word is inputted
 let rowStarters = [];
 let columnStarters = [];
+
+// these arrays store the hints, which are appended to their dynamically generated numbered label
 let AcrossHints = [];
 let DownHints = [];
+
+const initializeTable = (puzzle) => {
+  const newTable = new CliTable3({
+    chars: {
+      top: "═",
+      "top-mid": "╤",
+      "top-left": "╔",
+      "top-right": "╗",
+      bottom: "═",
+      "bottom-mid": "╧",
+      "bottom-left": "╚",
+      "bottom-right": "╝",
+      left: "║",
+      "left-mid": "╟",
+      mid: "─",
+      "mid-mid": "┼",
+      right: "║",
+      "right-mid": "╢",
+      middle: "│",
+    },
+    wordWrap: true,
+    colWidths: new Array(Object.values(puzzle.down).length).fill(5),
+  });
+  table = newTable;
+};
 
 const initializeAnswerSet = (puzzle) => {
   const set = new Set();
@@ -37,41 +68,27 @@ const initializeAnswerSet = (puzzle) => {
   answerSet = set;
 };
 
-//we need to run a check that the words intersect correctly
-//maybe add functionality that allows for offsets
-//maybe we should only take the across ones and label it accordingly
-
-const displayCompletedPuzzle = (across) => {
-  const rows = [];
-  for (const answer in across) {
-    const row = [];
-    for (const i in answer) {
-      row.push(answer[i]);
-    }
-    rows.push(row);
-  }
-  table.push(...rows);
-};
-
 const labelRowsAndColumns = (table) => {
   const labeled = new Set();
   let label = 1;
   for (let i = 0; i < table.length; i++) {
     for (let p = 0; p < table[i].length; p++) {
+      //if the current table column has been labeled already, skip it
       if (labeled.has(p)) {
         continue;
       }
-      //this wont work for every table. Ensure that atleast one is true: it has an open space below it, or an open space to the right of it
-      //if in a row that already has a label, it must only have a space below it to be labeled
+      //otherwise, if the table is open, label it
       if (table[i][p] === "") {
         table[i][p] = `${chalk.blue(`${label}.`)}`;
+        // if the label is a left boundary of the table, save its position to row starters (it starts the row and is an across word)
         if (p - 1 < 0 || table[i][p - 1] === "---") {
           rowStarters.push({ label: label, startingPos: i });
         }
-        // if the space above it is null or is a ---
+        // if the label is a top boundary of the table, save its position to column starters (it starts the column and is a down word)
         if (i - 1 < 0 || table[i - 1][p] === "---") {
           columnStarters.push({ label: label, startingPos: p });
         }
+        //increment label, and ensure we never add 0 to the set, as the zero index of every row always starts a row
         label += 1;
         if (p !== 0) {
           labeled.add(p);
@@ -101,26 +118,29 @@ const createEmptyPuzzle = (puzzle) => {
   table.push(...labeledTable);
 };
 
-const displayHints = (puzzle) => {
-  // only update acrossHints the first time this function is called
+const initializeLabeledHints = (puzzle, rowStarters, columnStarters) => {
+  const acrossHints = [];
+  const downHints = [];
   const puzzle_across = puzzle.across;
   const puzzle_down = puzzle.down;
-  if (AcrossHints.length === 0) {
+  if (acrossHints.length === 0) {
     let i = 0;
-    // the logic for this needs to change to account for down
     for (const key in puzzle_across) {
-      AcrossHints.push(`${rowStarters[i].label}. ${puzzle_across[key]}`);
+      acrossHints.push(`${rowStarters[i].label}. ${puzzle_across[key]}`);
       i += 1;
     }
   }
-  if (DownHints.length === 0) {
+  if (downHints.length === 0) {
     let i = 0;
     for (const key in puzzle_down) {
-      DownHints.push(`${columnStarters[i].label}. ${puzzle_down[key]}`);
+      downHints.push(`${columnStarters[i].label}. ${puzzle_down[key]}`);
       i += 1;
     }
   }
+  return [acrossHints, downHints];
+};
 
+const displayHints = (puzzle) => {
   console.log(table.toString());
   console.log(
     // we dont need the first value, as it is the direction
@@ -144,16 +164,6 @@ const displayHints = (puzzle) => {
       borderColor: "red",
     })
   );
-};
-
-const printFiglet = async (string, font) => {
-  await figlet.text(string, { font: font }, (err, data) => {
-    if (err) {
-      console.log("figlet went wrong");
-      return;
-    }
-    console.log(data);
-  });
 };
 
 const chooseAcrossOrDown = async (puzzle) => {
@@ -209,32 +219,6 @@ const chooseNumber = async (direction) => {
   }
 };
 
-const getStartingRowPosition = (label) => {
-  for (const starter of rowStarters) {
-    if (starter.label == label) {
-      return starter.startingPos;
-    }
-  }
-};
-
-const getStartingColumnPosition = (label) => {
-  for (const starter of columnStarters) {
-    if (starter.label == label) {
-      return starter.startingPos;
-    }
-  }
-};
-
-const getNumberFromChalkString = (string) => {
-  const [first, second] = string.split(".");
-  return first.at(-1);
-};
-
-const isChalkNumber = (string) => {
-  return !isNaN(getNumberFromChalkString(string)) && string !== "";
-  //   return !isNaN(chalkToNum[string]) && string !== "";
-};
-
 const modifyRow = async (answer, i) => {
   const row = table[i];
   let leftPointer = 0;
@@ -275,33 +259,6 @@ const modifyColumn = (answer, column) => {
   }
 };
 
-const inputAnswerIsValid = async (answer, row) => {
-  const validRow = row.filter((space) => space !== "---");
-  if (answer.length > validRow.length) {
-    console.log(
-      `Error: Input was too long. Must be ${row.length} characters or less`
-    );
-    return false;
-  }
-  return true;
-};
-
-const downAnswerIsValid = (answer, column) => {
-  let validColumnLength = 0;
-  for (let i = 0; i < table.length; i++) {
-    if (table[i][column] !== "---") {
-      validColumnLength++;
-    }
-  }
-  if (answer.length > validColumnLength) {
-    console.log(
-      `Error: Input was too long. Must be ${validColumnLength.length} characters or less`
-    );
-    return false;
-  }
-  return true;
-};
-
 const inputAnswer = async (label, direction) => {
   //iterate through AcrossHints: String[] to find the hint that matches the label
   //maybe instead we should have a bucket array where the index is the label and the value is the hint
@@ -317,48 +274,22 @@ const inputAnswer = async (label, direction) => {
   });
 
   if (direction === across) {
-    const startingRow = getStartingRowPosition(label);
-    if (!(await inputAnswerIsValid(answer.answer, table[startingRow]))) {
+    const startingRow = getStartingRowPosition(label, rowStarters);
+    if (!(await acrossAnswerIsValid(answer.answer, table[startingRow]))) {
       await inputAnswer(label, direction);
     } else {
       await modifyRow(answer.answer.toUpperCase(), startingRow);
       const row = table[startingRow];
     }
   } else {
-    const startingColumn = getStartingColumnPosition(label);
-    if (!(await downAnswerIsValid(answer.answer, startingColumn))) {
+    const startingColumn = getStartingColumnPosition(label, columnStarters);
+    if (!(await downAnswerIsValid(answer.answer, table, startingColumn))) {
       await inputAnswer(label, direction);
     } else {
       await modifyColumn(answer.answer.toUpperCase(), startingColumn);
     }
   }
   displayHints(globalPuzzle);
-};
-
-const isEmptyChalkString = (string) => {
-  return string.length === 18;
-};
-
-const isPopulatedChalkString = (string) => {
-  return string.length === 19;
-};
-
-const getValueFromChalkString = (string) => {
-  return string.at(-1);
-};
-
-const getAnswerSetFromPuzzle = (puzzle) => {
-  const set = new Set();
-  for (const key of [
-    ...Object.keys(puzzle.across),
-    ...Object.keys(puzzle.down),
-  ]) {
-    let formattedKey = key.trim().toUpperCase();
-    set.add(formattedKey);
-  }
-  console.log(set);
-
-  return set;
 };
 
 // \x1B[34m1.\x1B[39m
@@ -382,36 +313,18 @@ const checkCrossword = () => {
   return true;
 };
 
-const initializeTable = (puzzle) => {
-  const newTable = new CliTable3({
-    chars: {
-      top: "═",
-      "top-mid": "╤",
-      "top-left": "╔",
-      "top-right": "╗",
-      bottom: "═",
-      "bottom-mid": "╧",
-      "bottom-left": "╚",
-      "bottom-right": "╝",
-      left: "║",
-      "left-mid": "╟",
-      mid: "─",
-      "mid-mid": "┼",
-      right: "║",
-      "right-mid": "╢",
-      middle: "│",
-    },
-    wordWrap: true,
-    colWidths: new Array(Object.values(puzzle.down).length).fill(5),
-  });
-  table = newTable;
-};
-
 export const startCrossword = async (puzzle) => {
   globalPuzzle = puzzle;
   initializeTable(puzzle);
   initializeAnswerSet(puzzle);
   createEmptyPuzzle(puzzle);
+  const [acrossHints, downHints] = initializeLabeledHints(
+    puzzle,
+    rowStarters,
+    columnStarters
+  );
+  AcrossHints = acrossHints;
+  DownHints = downHints;
   await printFiglet("Terminal Crossword Time", "slant");
   displayHints(puzzle);
   while (!solved) {
