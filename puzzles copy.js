@@ -88,6 +88,14 @@ class Crossword {
     this.#answerSet = set;
   }
 
+  #isLeftBoundary(row, col, table) {
+    return col - 1 < 0 || table[row][col - 1] === "---";
+  }
+
+  #isTopBoundary(row, col, table) {
+    return row - 1 < 0 || table[row - 1][col] === "---";
+  }
+
   #labelRowsAndColumns(table) {
     console.log("In labelrowsandCOlumns");
     console.log(table);
@@ -95,27 +103,53 @@ class Crossword {
     const labeled = new Set();
     let label = 1;
     for (let row = 0; row < table.length; row++) {
+      let containsLabel = false;
       for (let col = 0; col < table[row].length; col++) {
         console.log(`row: ${row} col: ${col}`);
+        console.log(`label at beginning of loop: ${label}`);
 
-        //if the current table column has been labeled already, skip it
-        if (labeled.has(col)) {
-          continue;
-        }
         //otherwise, if the table is open, label it
         if (table[row][col] === "") {
           console.log(`label row ${row} col ${col} with label ${label}`);
 
+          // in cases where a left offset occurs in the middle of the crossword, multiple labels will occur at the same non zero column
+          //this handles that case
+          if (!containsLabel) {
+            table[row][col] = `${chalk.blue(`${label}.`)}`;
+            // if the label is a left boundary of the table, save its position to row starters (it starts the row and is an across word)
+            if (this.#isLeftBoundary(row, col, table)) {
+              this.#rowStarters.push({ label: label, startingPos: row });
+            }
+            // if the label is a top boundary of the table, save its position to column starters (it starts the column and is a down word)
+            if (this.#isTopBoundary(row, col, table)) {
+              this.#columnStarters.push({ label: label, startingPos: col });
+            }
+            containsLabel = true;
+            label += 1;
+            if (col !== 0) {
+              labeled.add(col);
+            }
+            continue;
+          }
+
+          if (labeled.has(col)) {
+            console.log(
+              `continuing becaause column has been labeled already: label = ${label}`
+            );
+            continue;
+          }
+
           table[row][col] = `${chalk.blue(`${label}.`)}`;
           // if the label is a left boundary of the table, save its position to row starters (it starts the row and is an across word)
-          if (col - 1 < 0 || table[row][col - 1] === "---") {
+          if (this.#isLeftBoundary(row, col, table)) {
             this.#rowStarters.push({ label: label, startingPos: row });
           }
           // if the label is a top boundary of the table, save its position to column starters (it starts the column and is a down word)
-          if (row - 1 < 0 || table[row - 1][col] === "---") {
+          if (this.#isTopBoundary(row, col, table)) {
             this.#columnStarters.push({ label: label, startingPos: col });
           }
           //increment label, and ensure we never add 0 to the set, as the zero index of every row always starts a row
+          containsLabel = true;
           label += 1;
           if (col !== 0) {
             labeled.add(col);
@@ -222,7 +256,7 @@ class Crossword {
 
     if (answers.direction === "hints") {
       this.#displayHints();
-      await this.#chooseOptionsMenu(puzzle);
+      await this.#chooseOptionsMenu();
     } else if (answers.direction === "check") {
       const isSolved = this.#checkCrossword();
       if (!isSolved) {
