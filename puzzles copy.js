@@ -97,25 +97,17 @@ class Crossword {
   }
 
   #labelRowsAndColumns(table) {
-    console.log("In labelrowsandCOlumns");
-    console.log(table);
-
     const labeled = new Set();
     let label = 1;
     for (let row = 0; row < table.length; row++) {
       let containsLabel = false;
       for (let col = 0; col < table[row].length; col++) {
-        console.log(`row: ${row} col: ${col}`);
-        console.log(`label at beginning of loop: ${label}`);
-
         //otherwise, if the table is open, label it
         if (table[row][col] === "") {
-          console.log(`label row ${row} col ${col} with label ${label}`);
-
           // in cases where a left offset occurs in the middle of the crossword, multiple labels will occur at the same non zero column
           //this handles that case
           if (!containsLabel) {
-            table[row][col] = `${chalk.blue(`${label}.`)}`;
+            table[row][col] = chalk.blue(`${label}.`);
             // if the label is a left boundary of the table, save its position to row starters (it starts the row and is an across word)
             if (this.#isLeftBoundary(row, col, table)) {
               this.#rowStarters.push({ label: label, startingPos: row });
@@ -124,30 +116,20 @@ class Crossword {
             if (this.#isTopBoundary(row, col, table)) {
               this.#columnStarters.push({ label: label, startingPos: col });
             }
-            containsLabel = true;
-            label += 1;
-            if (col !== 0) {
-              labeled.add(col);
+          } else if (labeled.has(col)) {
+            continue;
+          } else {
+            table[row][col] = chalk.blue(`${label}.`);
+            // if the label is a left boundary of the table, save its position to row starters (it starts the row and is an across word)
+            if (this.#isLeftBoundary(row, col, table)) {
+              this.#rowStarters.push({ label: label, startingPos: row });
             }
-            continue;
+            // if the label is a top boundary of the table, save its position to column starters (it starts the column and is a down word)
+            if (this.#isTopBoundary(row, col, table)) {
+              this.#columnStarters.push({ label: label, startingPos: col });
+            }
           }
 
-          if (labeled.has(col)) {
-            console.log(
-              `continuing becaause column has been labeled already: label = ${label}`
-            );
-            continue;
-          }
-
-          table[row][col] = `${chalk.blue(`${label}.`)}`;
-          // if the label is a left boundary of the table, save its position to row starters (it starts the row and is an across word)
-          if (this.#isLeftBoundary(row, col, table)) {
-            this.#rowStarters.push({ label: label, startingPos: row });
-          }
-          // if the label is a top boundary of the table, save its position to column starters (it starts the column and is a down word)
-          if (this.#isTopBoundary(row, col, table)) {
-            this.#columnStarters.push({ label: label, startingPos: col });
-          }
           //increment label, and ensure we never add 0 to the set, as the zero index of every row always starts a row
           containsLabel = true;
           label += 1;
