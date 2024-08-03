@@ -47,6 +47,8 @@ class Crossword {
   clearPuzzles() {
     this.#puzzles = [];
   }
+
+  //private methods
   #initializeTable() {
     const newTable = new CliTable3({
       chars: {
@@ -105,7 +107,7 @@ class Crossword {
         //otherwise, if the table is open, label it
         if (table[row][col] === "") {
           // in cases where a left offset occurs in the middle of the crossword, multiple labels will occur at the same non zero column
-          //this handles that case
+          //this handles that special case
           if (!containsLabel) {
             table[row][col] = chalk.blue(`${label}.`);
             // if the label is a left boundary of the table, save its position to row starters (it starts the row and is an across word)
@@ -130,7 +132,7 @@ class Crossword {
             }
           }
 
-          //increment label, and ensure we never add 0 to the set, as the zero index of every row always starts a row
+          //increment label, and ensure we never add 0 to the set, as the zero index of every row always starts a row (if cell is unblocked)
           containsLabel = true;
           label += 1;
           if (col !== 0) {
@@ -145,6 +147,8 @@ class Crossword {
   #createEmptyPuzzle() {
     //the keys of the across object are special
     //the keys are strings, and any spaces will block out the table cell, filling it with a ---
+    //for example, the key " xbox" will produce the table:
+    //   | --- |  x  |  b  |  o  |  x  |
     const across = this.#globalPuzzle.across;
 
     const rows = [];

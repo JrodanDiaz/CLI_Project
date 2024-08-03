@@ -364,12 +364,3 @@ export const startCrossword = async (puzzles) => {
     await chooseOptionsMenu(puzzle);
   }
 };
-
-/* 
-import crossword from joedan
-crossword.addPuzzle(puzzle)
-crossword.getPuzzles
-crossword.removePuzzle(index)
-crossword.clearPuzzles
-crossword.startGame
-*/
