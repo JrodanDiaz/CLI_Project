@@ -1,5 +1,5 @@
 import { puzzle1, puzzle2, puzzle3, puzzle4 } from "./puzzleData.js";
-import Crossword from "./puzzles copy.js";
+import Crossword from "./puzzleClass.js";
 
 // async function main() {
 //   await startCrossword([puzzle1, puzzle2, puzzle3]);

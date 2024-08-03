@@ -1,3 +1,8 @@
+/* 
+This file was my old, functional implementation of the crossword
+the file that is actually used is puzzleClass.js
+*/
+
 import CliTable3 from "cli-table3";
 import inquirer from "inquirer";
 import chalk from "chalk";
