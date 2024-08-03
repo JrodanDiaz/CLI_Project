@@ -1,0 +1,14 @@
+/node_modules
+/src
+.env
+.DS_Store
+tsconfig.json
+tsup.config.json
+.prettierignore
+.gitignore
+
+test.js
+puzzleUtils.js
+puzzleData.js
+index.js
+index.d.ts

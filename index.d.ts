@@ -45,6 +45,6 @@ declare module "Crossword" {
      *
      Will fail if a puzzle has not been added before this function call
      */
-    async startCrossword(): Promise<void>;
+    startCrossword(): Promise<void>;
   }
 }

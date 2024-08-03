@@ -1,21 +1,33 @@
 {
-  "name": "cli_project",
+  "name": "terminal-crossword",
   "version": "1.0.0",
-  "main": "index.js",
+  "main": "./dist/index.js",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.ts",
   "scripts": {
+    "build": "tsup",
     "start": "node index.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "keywords": [],
-  "type": "module",
-  "author": "",
-  "license": "ISC",
-  "description": "",
+  "keywords": [
+    "crossword",
+    "puzzle",
+    "game",
+    "terminal",
+    "cli"
+  ],
+  "author": "Jordan Diaz",
+  "license": "MIT",
+  "description": "Play a crossword puzzle inside the terminal !",
   "dependencies": {
     "boxen": "^8.0.0",
     "chalk": "^5.3.0",
     "cli-table3": "^0.6.5",
     "figlet": "^1.7.0",
     "inquirer": "^10.1.6"
+  },
+  "devDependencies": {
+    "tsup": "^8.2.4",
+    "typescript": "^5.5.4"
   }
 }
